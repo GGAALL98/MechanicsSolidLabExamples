@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goby Fatigue Lab 2026</title>
+    
+    <!-- KaTeX for Math Typesetting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    
+    <!-- Chart.js for Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Fonts: Inter and JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Palette: Deep Space with Neon Accents - Adjusted for brightness */
+            --bg-core: #0e1018; 
+            --panel-bg: rgba(30, 32, 45, 0.88); 
+            --panel-border: rgba(255, 255, 255, 0.15);
+            --panel-hover: rgba(255, 255, 255, 0.25);
+
+            --accent-cyan: #00f2ff;
+            --accent-pink: #ff0055;
+            --accent-yellow: #ffcc00;
+            --text-bright: #ffffff;
+            --text-dim: #94a3b8;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-core);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(0, 242, 255, 0.1) 0%, transparent 60%),
+                radial-gradient(circle at 100% 100%, rgba(255, 0, 85, 0.1) 0%, transparent 60%);
+            color: var(--text-bright);
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 25px;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+
+        /* --- LAYOUT GRID --- */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 380px 1fr 1fr;
+            grid-template-rows: auto 1fr 1fr;
+            gap: 24px;
+            width: 100%;
+            max-width: 1920px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            grid-column: 1 / -1;
+            display: flex; align-items: center; justify-content: center;
+            padding-bottom: 20px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .logo {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 2.2rem;
+            letter-spacing: -1px;
+            /* Smooth Holographic Gradient */
+            background: linear-gradient(90deg, 
+                #00f2ff, #0099ff, #7000ff, #ff0055, #ff9900, #ffcc00, #33ff00);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: holoShift 12s linear infinite;
+        }
+        @keyframes holoShift { 
+            0% { background-position: 0% center; }
+            100% { background-position: 300% center; }
+        }
+
+        /* --- PANELS --- */
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .panel:hover { 
+            border-color: var(--panel-hover);
+        }
+
+        h2 {
+            font-size: 0.8rem; 
+            letter-spacing: 1.5px; 
+            text-transform: uppercase;
+            color: var(--text-dim); 
+            margin: 0 0 24px 0;
+            border-bottom: 1px solid var(--panel-border); 
+            padding-bottom: 12px;
+            font-weight: 700;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar { grid-column: 1 / 2; grid-row: 2 / 4; }
+        
+        .control-group { margin-bottom: 30px; }
+        
+        label { 
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.85rem; font-weight: 600; 
+            color: var(--accent-cyan); 
+            margin-bottom: 12px; 
+        }
+        
+        .val-display { 
+            font-family: 'JetBrains Mono', monospace; 
+            color: var(--text-bright); 
+            background: rgba(0,0,0,0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* Inputs */
+        input[type="range"] {
+            width: 100%; cursor: pointer; height: 6px; 
+            background: rgba(255,255,255,0.1);
+            appearance: none; border-radius: 3px; outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none; width: 18px; height: 18px; border-radius: 50%;
+            background: var(--accent-cyan); 
+            box-shadow: 0 0 12px rgba(0, 242, 255, 0.5);
+            transition: transform 0.1s;
+        }
+        input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.2); }
+
+        select, input[type="number"] {
+            width: 100%; background: rgba(0,0,0,0.3); 
+            border: 1px solid var(--panel-border);
+            color: white; padding: 12px; border-radius: 8px; 
+            font-family: 'JetBrains Mono'; font-size: 0.95rem;
+            outline: none; transition: 0.2s;
+        }
+        select:focus, input[type="number"]:focus { 
+            border-color: var(--accent-cyan); 
+        }
+
+        /* --- MATH & INFO --- */
+        #mathBox {
+            margin-top: 20px; padding: 16px; 
+            background: rgba(0,0,0,0.3); 
+            border-radius: 8px; border: 1px solid var(--panel-border);
+            font-size: 1rem; overflow-x: auto;
+            text-align: center;
+        }
+
+        .telemetry-dashboard {
+            margin-top: 30px;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+
+        .tele-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px; background: rgba(255,255,255,0.03); border-radius: 8px;
+            border-left: 4px solid var(--panel-border);
+            transition: background 0.3s;
+        }
+        .tele-label { 
+            font-size: 0.75rem; color: var(--text-dim); 
+            font-weight: 700; letter-spacing: 0.5px; 
+        }
+        .tele-val { 
+            font-family: 'JetBrains Mono'; color: var(--text-bright); 
+            font-size: 1.1rem; 
+        }
+        
+        .tele-row.safe { border-left-color: var(--accent-cyan); }
+        .tele-row.danger { border-left-color: var(--accent-pink); background: rgba(255, 0, 85, 0.08); }
+
+        /* Updated Info Box Styling */
+        .info-box {
+            margin-top: auto; padding: 20px;
+            background: rgba(0,0,0,0.25); 
+            border-radius: 12px; border: 1px solid var(--panel-border);
+            font-size: 0.85rem; line-height: 1.7; color: #b0b5c0;
+        }
+        .info-header { 
+            color: var(--accent-yellow); 
+            font-weight: 800; margin-bottom: 10px; 
+            font-size: 0.9rem; letter-spacing: 1px; 
+            text-transform: uppercase;
+        }
+        .info-content strong { color: #fff; }
+
+        /* --- CHARTS --- */
+        .chart-main { grid-column: 2 / -1; grid-row: 2 / 3; }
+        .chart-sub-1 { grid-column: 2 / 3; grid-row: 3 / 4; }
+        .chart-sub-2 { grid-column: 3 / 4; grid-row: 3 / 4; }
+
+        .chart-box { position: relative; width: 100%; height: 100%; min-height: 300px; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard { grid-template-columns: 1fr; grid-template-rows: auto; display: flex; flex-direction: column; }
+            .sidebar { order: 1; }
+            .chart-main { order: 2; height: 500px; }
+            .chart-sub-1 { order: 3; height: 400px; }
+            .chart-sub-2 { order: 4; height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo">GOBY LABS FATIGUE STUDIO</div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside class="panel sidebar">
+        <h2>Configuration</h2>
+        
+        <div class="control-group">
+            <label>Material Preset</label>
+            <select id="matSelect" onchange="updateSim()">
+                <option value="al">Aluminum 6061-T6 (Report Data)</option>
+                <option value="brass">Brass Alloy (Report Data)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Machine Force (F) <span id="fDisplay" class="val-display">15.0 N</span></label>
+            <input type="range" id="fInput" min="5" max="60" step="0.5" value="15" oninput="updateSim()">
+        </div>
+
+        <div class="control-group">
+            <label>Neck Diameter (d) [mm]</label>
+            <input type="number" id="dInput" value="4.31" step="0.01" oninput="updateSim()">
+        </div>
+
+        <div class="control-group">
+            <label>Moment Arm (L) [mm]</label>
+            <input type="number" id="lInput" value="128.7" step="0.1" oninput="updateSim()">
+        </div>
+
+        <div id="mathBox"></div>
+
+        <div class="telemetry-dashboard">
+            <div class="tele-row safe" id="statusRow">
+                <span class="tele-label">PREDICTED LIFE</span>
+                <span class="tele-val" id="lifeVal">---</span>
+            </div>
+            <div class="tele-row">
+                <span class="tele-label">PEAK STRESS</span>
+                <span class="tele-val" id="stressVal">---</span>
+            </div>
+            <div class="tele-row">
+                <span class="tele-label">SAFETY FACTOR</span>
+                <span class="tele-val" id="sfVal">---</span>
+            </div>
+        </div>
+
+        <!-- Info Box populated by JS for KaTeX -->
+        <div class="info-box" id="infoBox"></div>
+    </aside>
+
+    <!-- MAIN CHART: S-N -->
+    <section class="panel chart-main">
+        <h2>S-N Curve (Stress Life)</h2>
+        <div class="chart-box">
+            <canvas id="snChart"></canvas>
+        </div>
+    </section>
+
+    <!-- SUB CHART 1: F-N -->
+    <section class="panel chart-sub-1">
+        <h2>F-N Profile (Run-to-Failure)</h2>
+        <div class="chart-box">
+            <canvas id="fnChart"></canvas>
+        </div>
+    </section>
+
+    <!-- SUB CHART 2: LOG-LOG -->
+    <section class="panel chart-sub-2">
+        <h2>Log-Log Linearization</h2>
+        <div class="chart-box">
+            <canvas id="logChart"></canvas>
+        </div>
+    </section>
+</div>
+
+<script>
+    // --- MATERIAL DATABASE ---
+    // Coefficients derived from lab report linear regression
+    const matDB = {
+        al: { 
+            name: "Al 6061-T6", 
+            a: 774.69, b: -0.1284, 
+            logA: 2.8891, logB: -0.1284,
+            yield: 276, color: '#00f2ff',
+            raw: [{x:405,y:395}, {x:1020,y:331}, {x:3271,y:282}, {x:29742,y:201}, {x:8820607,y:110}, {x:206295752,y:62}]
+        },
+        brass: { 
+            name: "Brass", 
+            a: 627.72, b: -0.0691, 
+            logA: 2.7978, logB: -0.0691,
+            yield: 380, color: '#ff0055',
+            raw: [{x:405,y:395}, {x:3271,y:282}, {x:29742,y:201}, {x:848713,y:139}, {x:43213455,y:79}]
+        }
+    };
+
+    let charts = {};
+
+    function init() {
+        // 1. Initialize Info Box with KaTeX
+        const infoHTML = `
+            <div class="info-header">LAB INSIGHTS</div>
+            <div class="info-content">
+                <strong>Test:</strong> Wöhler Rotating Bending (${katex.renderToString("R = -1")}).<br>
+                <strong>Mechanism:</strong> Crack Initiation ${katex.renderToString("\\rightarrow")} Propagation (Beach Marks) ${katex.renderToString("\\rightarrow")} Final Fracture.<br>
+                <strong>Basquin's Law:</strong> Empirical Power Law relation (${katex.renderToString("S = aN^b")}).<br>
+                <strong>Report Findings:</strong> Aluminum shows no fatigue limit; Brass tends to stabilize at high cycles (${katex.renderToString(">10^7")}).
+            </div>
+        `;
+        document.getElementById('infoBox').innerHTML = infoHTML;
+
+        // 2. Chart Configuration
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.08)';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.size = 12;
+
+        const commonOpts = (title, xLbl, yLbl, xType) => ({
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                title: { 
+                    display: true, 
+                    text: title, 
+                    color: '#fff', 
+                    align: 'start', 
+                    padding: {bottom: 5},
+                    font: { size: 14, weight: '700' }
+                },
+                subtitle: {
+                    display: true,
+                    text: 'Initializing...',
+                    color: '#ffcc00',
+                    align: 'start',
+                    padding: {bottom: 15},
+                    font: { family: "'JetBrains Mono', monospace", size: 11 }
+                },
+                legend: { display: false },
+                tooltip: { 
+                    backgroundColor: 'rgba(11, 12, 21, 0.95)', 
+                    titleColor: '#fff', bodyColor: '#fff', 
+                    borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+                    displayColors: false, padding: 12, cornerRadius: 8
+                }
+            },
+            scales: {
+                x: { 
+                    type: xType, title: {display:true, text:xLbl}, 
+                    grid: {color: 'rgba(255,255,255,0.05)'},
+                    ticks: { color: '#94a3b8' }
+                },
+                y: { 
+                    title: {display:true, text:yLbl}, 
+                    grid: {color: 'rgba(255,255,255,0.05)'},
+                    ticks: { color: '#94a3b8' }
+                }
+            },
+            elements: { point: { radius: 0, hitRadius: 20, hoverRadius: 8 } },
+            animation: false // Disabled to prevent flickering during rapid updates
+        });
+
+        // Initialize Charts
+        charts.sn = new Chart(document.getElementById('snChart'), {
+            type: 'scatter', data: {datasets:[]}, 
+            options: commonOpts('S-N Stress Life', 'Cycles (N)', 'Stress (MPa)', 'logarithmic')
+        });
+
+        charts.fn = new Chart(document.getElementById('fnChart'), {
+            type: 'line', data: {datasets:[]}, 
+            options: commonOpts('F-N Profile (Run-to-Failure)', 'Cycles (N)', 'Applied Force (N)', 'logarithmic')
+        });
+
+        charts.log = new Chart(document.getElementById('logChart'), {
+            type: 'scatter', data: {datasets:[]}, 
+            options: commonOpts('Basquin Linearization', 'Log(N)', 'Log(S)', 'linear')
+        });
+
+        updateSim();
+    }
+
+    function updateSim() {
+        const key = document.getElementById('matSelect').value;
+        const mat = matDB[key];
+        const F = parseFloat(document.getElementById('fInput').value);
+        const d = parseFloat(document.getElementById('dInput').value);
+        const L = parseFloat(document.getElementById('lInput').value);
+
+        document.getElementById('fDisplay').innerText = F.toFixed(1) + " N";
+
+        // --- PHYSICS CALCULATION ---
+        // 1. Stress: S = 32FL / (pi * d^3)
+        const stress = (32 * F * L) / (Math.PI * Math.pow(d, 3));
+        
+        // 2. Life: N = (S/a)^(1/b)
+        const life = Math.pow(stress / mat.a, 1 / mat.b);
+        const sf = mat.yield / stress;
+
+        // --- TELEMETRY ---
+        document.getElementById('lifeVal').innerText = life > 1e9 ? "> 10^9" : Math.round(life).toLocaleString();
+        document.getElementById('stressVal').innerText = stress.toFixed(0) + " MPa";
+        document.getElementById('sfVal').innerText = sf.toFixed(2);
+        
+        const statusRow = document.getElementById('statusRow');
+        statusRow.className = sf < 1 ? "tele-row danger" : "tele-row safe";
+        
+        // --- MATH RENDER ---
+        katex.render(`\\sigma = \\frac{32 \\cdot ${F} \\cdot ${L}}{\\pi \\cdot ${d}^3} = \\textcolor{${mat.color}}{${stress.toFixed(0)} \\text{ MPa}}`, document.getElementById('mathBox'));
+
+        // --- UPDATE CHART TITLES ---
+        charts.sn.options.plugins.subtitle.text = `Fit Model: S = ${mat.a} · N^(${mat.b})`;
+        charts.log.options.plugins.subtitle.text = `Linear Model: Log(S) = ${mat.logB} · Log(N) + ${mat.logA}`;
+        charts.fn.options.plugins.subtitle.text = `Load Profile: Constant ${F.toFixed(1)} N until Fracture`;
+
+        // --- CURVE GENERATION ---
+        
+        const lineS = [], lineLog = [];
+        // Generate S-N & Log Curves
+        for(let i=2.5; i<=9; i+=0.2) {
+            let n = Math.pow(10, i);
+            let s = mat.a * Math.pow(n, mat.b);
+            lineS.push({x:n, y:s});
+            lineLog.push({x:i, y:Math.log10(s)});
+        }
+
+        // Generate F-N "Run-to-Failure" Profile
+        // Logic: Maintain constant Force F until failure life N, then smooth drop-off
+        const lineF = [];
+        const startN = 100; 
+        
+        // 1. Plateau
+        lineF.push({x: startN, y: F});
+        lineF.push({x: life, y: F}); 
+        
+        // 2. Failure Arc
+        // Drop to 85% force slightly after failure point (1.02x life)
+        lineF.push({x: life * 1.02, y: F * 0.85}); 
+        lineF.push({x: life * 1.05, y: F * 0.4});
+        lineF.push({x: life * 1.1, y: 0});
+        
+        // --- UPDATE DATASETS ---
+
+        const makeDatasets = (lineData, activePoint, color, raw) => {
+            const ds = [];
+            // Model Curve
+            ds.push({
+                label: 'Model', data: lineData, borderColor: color, borderWidth: 3, showLine: true, pointRadius: 0
+            });
+            // Operating Point
+            if(activePoint) {
+                ds.push({
+                    label: 'Current Op', data: [activePoint], 
+                    backgroundColor: '#fff', borderColor: '#fff', pointRadius: 6, pointHoverRadius: 10, pointBorderWidth: 2
+                });
+            }
+            // Raw Lab Data
+            if(raw) {
+                ds.push({
+                    label: 'Lab Data', data: raw, backgroundColor: 'rgba(255,255,255,0.35)', pointRadius: 4, type: 'scatter'
+                });
+            }
+            return ds;
+        };
+
+        // Update S-N
+        charts.sn.data.datasets = makeDatasets(lineS, {x:life, y:stress}, mat.color, mat.raw);
+        charts.sn.update();
+
+        // Update F-N
+        charts.fn.data.datasets = [
+            {
+                label: 'Test Profile', data: lineF, 
+                borderColor: '#ffcc00', borderWidth: 3, 
+                pointRadius: 0, fill: false, tension: 0.35 // Tension creates the smooth roll-off
+            },
+            {
+                label: 'Break Point', data: [{x:life, y:F}], backgroundColor: '#fff', pointRadius: 5
+            }
+        ];
+        charts.fn.update();
+
+        // Update Log-Log
+        charts.log.data.datasets = [{
+            label: 'Linearization', data: lineLog, borderColor: '#c084fc', borderWidth: 3, showLine: true, pointRadius: 0
+        }, {
+            label: 'Current', data: [{x:Math.log10(life), y:Math.log10(stress)}], backgroundColor: '#fff', pointRadius: 6
+        }];
+        charts.log.update();
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
