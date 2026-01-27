@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goby Lab Suite 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-core: #030305;
+            --accent-cyan: #00f2ff;
+            --accent-pink: #ff0055;
+            --accent-purple: #bd00ff;
+            --text-bright: #ffffff;
+            --text-dim: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.02);
+            --card-border: rgba(255, 255, 255, 0.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--text-bright);
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative;
+            cursor: default; /* Custom cursor handling via JS if needed, or default */
+        }
+
+        /* --- VISUAL EFFECTS: NOISE --- */
+        .grain-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9000;
+            opacity: 0.035;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* --- VISUAL EFFECTS: CURSOR FLAME --- */
+        .cursor-flame-particle {
+            position: fixed;
+            top: 0; left: 0;
+            pointer-events: none;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(0, 242, 255, 0.5) 50%, transparent 100%);
+            mix-blend-mode: screen;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+        }
+
+        /* --- INTRO ANIMATION --- */
+        .main-blur-wrapper {
+            width: 100%; display: flex; flex-direction: column; align-items: center;
+            transition: filter 1.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 1.5s ease;
+            filter: blur(25px) contrast(1.2);
+            transform: scale(0.92);
+            opacity: 0;
+            will-change: filter, transform, opacity;
+        }
+
+        .main-blur-wrapper.focused {
+            filter: blur(0) contrast(1);
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* --- BACKGROUND GRADIENT MESH --- */
+        .bg-gradient {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(
+                125deg, 
+                #050508 0%, 
+                #0f0518 25%, 
+                #000000 50%, 
+                #051018 75%, 
+                #050508 100%
+            );
+            background-size: 400% 400%;
+            z-index: -3;
+            animation: bgShift 15s ease infinite;
+        }
+
+        @keyframes bgShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .orb {
+            position: fixed; border-radius: 50%;
+            filter: blur(90px); opacity: 0.3;
+            z-index: -2;
+            animation: drift 20s infinite alternate ease-in-out;
+            pointer-events: none;
+        }
+        .orb-1 { width: 500px; height: 500px; background: var(--accent-purple); top: -20%; left: -10%; }
+        .orb-2 { width: 400px; height: 400px; background: var(--accent-cyan); bottom: -20%; right: -10%; animation-delay: -5s; }
+        
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 40px) scale(1.05); }
+        }
+
+        /* --- AMBIENT PARTICLES --- */
+        .particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: -1;
+        }
+        .particle {
+            position: absolute;
+            font-size: 1.2rem; 
+            opacity: 0;
+            animation: floatUp linear infinite;
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            80% { opacity: 0.5; }
+            100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+        }
+
+        /* --- MAIN LAYOUT --- */
+        .container {
+            width: 100%; max-width: 1000px;
+            padding: 20px;
+            display: flex; flex-direction: column; align-items: center; 
+            gap: 40px;
+            z-index: 1; perspective: 1000px;
+        }
+
+        /* --- HEADER --- */
+        .header { 
+            text-align: center; position: relative; 
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700; 
+            font-size: 4rem;
+            letter-spacing: -2px;
+            margin-bottom: 0px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #ffffff, #a5f3fc, #ffffff, #e0f2fe);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: textShine 5s linear infinite;
+        }
+
+        @keyframes textShine {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+
+        .subtitle {
+            font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan);
+            font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase;
+            padding: 6px 16px; border-radius: 4px;
+            background: rgba(0, 242, 255, 0.03);
+            border: 1px solid rgba(0, 242, 255, 0.15);
+            display: inline-block;
+            position: relative; overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .subtitle::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.3), transparent);
+            animation: scan 4s infinite ease-in-out;
+        }
+        @keyframes scan { 0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; } }
+
+        /* --- PROFILE SECTION --- */
+        .profile-row {
+            display: flex; align-items: center; justify-content: center; gap: 15px;
+            margin-top: 5px;
+            padding: 8px 20px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            animation: fadeUp 1s ease forwards 0.2s;
+            opacity: 0; transform: translateY(10px);
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .creator-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem; font-weight: 700; color: #fff;
+            padding-right: 15px;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .pill-btn-small {
+            text-decoration: none; font-weight: 500; font-size: 0.75rem;
+            color: var(--text-dim); transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .pill-btn-small:hover { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+
+
+        /* --- 3D INTERACTIVE CARDS --- */
+        .grid {
+            display: flex; flex-wrap: wrap; justify-content: center; 
+            gap: 20px;
+            width: 100%;
+        }
+
+        .card-wrapper {
+            width: 100%; max-width: 320px;
+            flex: 1 1 280px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .card {
+            width: 100%; height: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--card-border);
+            border-radius: 20px; 
+            padding: 35px 25px;
+            text-decoration: none; 
+            position: relative;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), 
+                        0 10px 30px rgba(0,0,0,0.3);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden;
+            cursor: pointer;
+            z-index: 1;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* CLICK FIX: 
+           1. pointer-events: none on children ensures clicks bubble to the parent anchor.
+           2. ::after overlay ensures no dead spots.
+        */
+        .card > * {
+            pointer-events: none;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 10; 
+            background: transparent;
+        }
+
+        .card::before {
+            content: ''; position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            top: var(--mouse-y, 50%); left: var(--mouse-x, 50%);
+            transform: translate(-50%, -50%);
+            opacity: 0; transition: opacity 0.3s;
+            pointer-events: none; z-index: 0;
+        }
+        .card:hover::before { opacity: 1; }
+        .card:hover { 
+            border-color: rgba(255,255,255,0.2); 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .card-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center;}
+
+        .icon-box {
+            width: 60px; height: 60px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; margin-bottom: 20px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .card:hover .icon-box { 
+            transform: translateY(-5px) scale(1.1);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
+        }
+
+        .card h2 { 
+            font-family: 'Space Grotesk', sans-serif;
+            color: #fff; margin: 0 0 10px 0; font-size: 1.5rem; font-weight: 700; 
+            transition: color 0.2s;
+        }
+        .card:hover h2 { color: var(--accent-cyan); }
+        
+        .card p { 
+            color: var(--text-dim); font-size: 0.85rem; line-height: 1.5; margin: 0; 
+            max-width: 95%; transition: color 0.2s;
+        }
+        .card:hover p { color: #ccc; }
+
+        /* --- FOOTER --- */
+        .footer {
+            margin-top: 20px;
+            animation: fadeUp 1.2s ease forwards 0.5s;
+            opacity: 0;
+        }
+
+        .ai-disclaimer {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; 
+            color: var(--text-dim); opacity: 0.3;
+            text-align: center; letter-spacing: 1px;
+        }
+
+        /* --- RESPONSIVE DESIGN --- */
+        @media (max-width: 768px) {
+            .logo { font-size: 2.5rem; }
+            .grid { flex-direction: column; align-items: center; }
+            .card-wrapper { width: 100%; max-width: 100%; }
+            .card-wrapper { transform: none !important; } 
+            
+            .profile-row { flex-wrap: wrap; gap: 10px; justify-content: center; }
+            .creator-name { border-right: none; padding-right: 0; width: 100%; text-align: center; margin-bottom: 5px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Visual Overlays -->
+    <div class="grain-overlay"></div>
+    <div class="bg-gradient"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="particles" id="particles"></div>
+
+    <!-- Main Content -->
+    <div class="main-blur-wrapper" id="mainContent">
+        <div class="container">
+            
+            <!-- Header -->
+            <div class="header">
+                <div class="logo" id="mainTitle">GOBY LAB SUITE</div>
+                <div class="subtitle">ENGINEERING SIMULATION HUB // 2026</div>
+
+                <div class="profile-row">
+                    <span class="creator-name">Goby</span>
+                    <a href="https://www.linkedin.com/in/gal-ben/" target="_blank" class="pill-btn-small">LinkedIn</a>
+                    <a href="https://ggaall98.github.io/GobyOS-2025/" target="_blank" class="pill-btn-small">Personal Page</a>
+                </div>
+            </div>
+
+            <!-- Lab Modules -->
+            <div class="grid">
+                
+                <div class="card-wrapper">
+                    <a href="fatigue.html" class="card">
+                        <div class="card-content">
+                            <div class="icon-box" style="color: var(--accent-cyan); text-shadow: 0 0 20px var(--accent-cyan);">
+                                🔄
+                            </div>
+                            <h2>Fatigue Lab</h2>
+                            <p>Advanced S-N analysis, Basquin modeling, and lifetime prediction for aerospace alloys.</p>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="card-wrapper">
+                    <a href="buckling.html" class="card">
+                        <div class="card-content">
+                            <div class="icon-box" style="color: var(--accent-pink); text-shadow: 0 0 20px var(--accent-pink);">
+                                📉
+                            </div>
+                            <h2>Buckling Lab</h2>
+                            <p>Euler stability, imperfection sensitivity, and interactive Southwell plots.</p>
+                        </div>
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <div class="ai-disclaimer">
+                    // Simulations generated via AI for Solid Mechanics Lab • Tel Aviv University //
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Initialization and Effects ---
+        window.addEventListener('load', () => {
+            requestAnimationFrame(() => {
+                document.getElementById('mainContent').classList.add('focused');
+                scrambleText(document.getElementById('mainTitle'), "GOBY LAB SUITE");
+            });
+        });
+
+        // --- 2. Text Decryption Animation ---
+        function scrambleText(element, finalText) {
+            let iterations = 0;
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%&";
+            const interval = setInterval(() => {
+                element.innerText = finalText
+                    .split("")
+                    .map((letter, index) => {
+                        if(index < iterations) {
+                            return finalText[index];
+                        }
+                        return letters[Math.floor(Math.random() * letters.length)];
+                    })
+                    .join("");
+                
+                if(iterations >= finalText.length) clearInterval(interval);
+                
+                iterations += 1/2; 
+            }, 30);
+        }
+
+        // --- 3. 3D Tilt Interaction ---
+        const cards = document.querySelectorAll('.card');
+        const wrappers = document.querySelectorAll('.card-wrapper');
+
+        wrappers.forEach((wrapper, index) => {
+            const card = cards[index];
+
+            wrapper.addEventListener('mousemove', (e) => {
+                // Disable transition for instantaneous response (prevents lag)
+                card.style.transition = 'none';
+
+                const rect = wrapper.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Update internal spotlight
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+
+                // Calculate Rotation
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -12;
+                const rotateY = ((x - centerX) / centerX) * 12;
+
+                card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.04)`;
+            });
+
+            wrapper.addEventListener('mouseleave', () => {
+                // Re-enable transition for smooth exit
+                card.style.transition = 'transform 0.5s ease, border-color 0.2s ease, box-shadow 0.2s ease';
+                card.style.transform = `rotateX(0) rotateY(0) scale(1)`;
+            });
+        });
+
+        // --- 4. Ambient Particle System ---
+        const emojis = ['⚙️', '📐', '🧪', '📉', '🏗️', '🔬', '🔩', '📡', '🧲'];
+        const container = document.getElementById('particles');
+        
+        for(let i=0; i<18; i++) { 
+            const el = document.createElement('div');
+            el.classList.add('particle');
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + '%';
+            el.style.animationDuration = (12 + Math.random() * 10) + 's';
+            el.style.animationDelay = (Math.random() * -15) + 's';
+            
+            const depth = Math.random();
+            el.style.filter = `blur(${depth * 4}px)`; 
+            el.style.opacity = (1 - depth) * 0.5; 
+            el.style.fontSize = (0.8 + Math.random()) + 'rem';
+            
+            container.appendChild(el);
+        }
+
+        // --- 5. Glass Flame Mouse Trail ---
+        document.addEventListener('mousemove', (e) => {
+            // Create particle
+            const particle = document.createElement('div');
+            particle.classList.add('cursor-flame-particle');
+            document.body.appendChild(particle);
+
+            // Set Position
+            particle.style.left = `${e.clientX}px`;
+            particle.style.top = `${e.clientY}px`;
+
+            // Randomize Size and Physics
+            const size = Math.random() * 8 + 4; // 4px to 12px
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            // Animate using Web Animations API for performance
+            const destinationX = (Math.random() - 0.5) * 20;
+            const destinationY = - (Math.random() * 40 + 20); // Float up
+
+            const animation = particle.animate([
+                { transform: `translate(-50%, -50%) scale(1)`, opacity: 0.6, filter: 'blur(1px)' },
+                { transform: `translate(calc(-50% + ${destinationX}px), calc(-50% + ${destinationY}px)) scale(0)`, opacity: 0, filter: 'blur(4px)' }
+            ], {
+                duration: 600 + Math.random() * 400,
+                easing: 'cubic-bezier(0, .9, .57, 1)'
+            });
+
+            // Cleanup
+            animation.onfinish = () => particle.remove();
+        });
+
+    </script>
+
+</body>
+</html>
