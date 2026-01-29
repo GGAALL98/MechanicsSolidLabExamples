@@ -12,507 +12,396 @@
             --accent-pink: #ff0055;
             --accent-purple: #bd00ff;
             --text-bright: #ffffff;
-            --text-dim: #94a3b8;
+            --text-dim: #64748b;
             --card-bg: rgba(255, 255, 255, 0.02);
             --card-border: rgba(255, 255, 255, 0.06);
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             background-color: var(--bg-core);
             color: var(--text-bright);
             font-family: 'Inter', sans-serif;
-            margin: 0; padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             position: relative;
-            cursor: default; /* Custom cursor handling via JS if needed, or default */
+            cursor: default;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* --- VISUAL EFFECTS: NOISE --- */
+        /* Ambient overlays */
         .grain-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 9000;
-            opacity: 0.035;
+            opacity: 0.03;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        /* --- VISUAL EFFECTS: CURSOR FLAME --- */
         .cursor-flame-particle {
-            position: fixed;
-            top: 0; left: 0;
-            pointer-events: none;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(0, 242, 255, 0.5) 50%, transparent 100%);
-            mix-blend-mode: screen;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
+            position: fixed; top: 0; left: 0;
+            pointer-events: none; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, var(--accent-cyan) 50%, transparent 100%);
+            mix-blend-mode: screen; z-index: 9999;
+            transform: translate3d(-50%, -50%, 0);
         }
 
-        /* --- INTRO ANIMATION --- */
-        .main-blur-wrapper {
-            width: 100%; display: flex; flex-direction: column; align-items: center;
-            transition: filter 1.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 1.5s ease;
-            filter: blur(25px) contrast(1.2);
-            transform: scale(0.92);
-            opacity: 0;
-            will-change: filter, transform, opacity;
-        }
-
-        .main-blur-wrapper.focused {
-            filter: blur(0) contrast(1);
-            transform: scale(1);
-            opacity: 1;
-        }
-
-        /* --- BACKGROUND GRADIENT MESH --- */
         .bg-gradient {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(
-                125deg, 
-                #050508 0%, 
-                #0f0518 25%, 
-                #000000 50%, 
-                #051018 75%, 
-                #050508 100%
-            );
+            background: linear-gradient(125deg, #050508 0%, #0f0518 25%, #000000 50%, #051018 75%, #050508 100%);
             background-size: 400% 400%;
-            z-index: -3;
-            animation: bgShift 15s ease infinite;
+            z-index: -3; animation: bgShift 15s ease infinite;
         }
-
-        @keyframes bgShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+        @keyframes bgShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 
         .orb {
-            position: fixed; border-radius: 50%;
-            filter: blur(90px); opacity: 0.3;
-            z-index: -2;
-            animation: drift 20s infinite alternate ease-in-out;
-            pointer-events: none;
+            position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.15;
+            z-index: -2; animation: drift 25s infinite alternate ease-in-out; pointer-events: none;
         }
-        .orb-1 { width: 500px; height: 500px; background: var(--accent-purple); top: -20%; left: -10%; }
-        .orb-2 { width: 400px; height: 400px; background: var(--accent-cyan); bottom: -20%; right: -10%; animation-delay: -5s; }
-        
-        @keyframes drift {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(30px, 40px) scale(1.05); }
-        }
+        .orb-1 { width: 600px; height: 600px; background: var(--accent-purple); top: -10%; left: -10%; }
+        .orb-2 { width: 500px; height: 500px; background: var(--accent-cyan); bottom: -10%; right: -10%; animation-delay: -7s; }
+        @keyframes drift { 0% { transform: translate3d(0, 0, 0) scale(1); } 100% { transform: translate3d(50px, 60px, 0) scale(1.1); } }
 
-        /* --- AMBIENT PARTICLES --- */
-        .particles {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: -1;
+        /* Component entrance transitions */
+        .main-blur-wrapper {
+            width: 100%; display: flex; flex-direction: column; align-items: center;
+            transition: filter 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 1.2s ease;
+            filter: blur(20px); transform: scale(0.95); opacity: 0;
+            will-change: filter, transform, opacity;
         }
-        .particle {
-            position: absolute;
-            font-size: 1.2rem; 
-            opacity: 0;
-            animation: floatUp linear infinite;
-        }
-        
-        @keyframes floatUp {
-            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.5; }
-            80% { opacity: 0.5; }
-            100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
-        }
+        .main-blur-wrapper.focused { filter: blur(0); transform: scale(1); opacity: 1; }
 
-        /* --- MAIN LAYOUT --- */
         .container {
-            width: 100%; max-width: 1000px;
-            padding: 20px;
-            display: flex; flex-direction: column; align-items: center; 
-            gap: 40px;
-            z-index: 1; perspective: 1000px;
+            width: 100%; max-width: 1100px; padding: 40px 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 35px;
+            z-index: 1; perspective: 1200px;
         }
 
-        /* --- HEADER --- */
-        .header { 
-            text-align: center; position: relative; 
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-        }
+        .header { text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         
         .logo {
             font-family: 'Space Grotesk', sans-serif;
-            font-weight: 700; 
-            font-size: 4rem;
-            letter-spacing: -2px;
-            margin-bottom: 0px;
-            text-transform: uppercase;
-            background: linear-gradient(90deg, #ffffff, #a5f3fc, #ffffff, #e0f2fe);
-            background-size: 300% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
+            font-weight: 700; font-size: 4.5rem; letter-spacing: -3px;
+            text-transform: uppercase; line-height: 1;
+            
+            /* Gradient shimmer effect */
+            background: linear-gradient(
+                90deg, 
+                #ffffff 0%, 
+                var(--accent-cyan) 25%, 
+                #ffffff 50%, 
+                var(--accent-cyan) 75%, 
+                #ffffff 100%
+            );
+            background-size: 200% auto;
+            -webkit-background-clip: text; 
+            background-clip: text; 
             color: transparent;
-            animation: textShine 5s linear infinite;
+            
+            animation: waterFlow 6s linear infinite;
+            will-change: background-position;
+            backface-visibility: hidden;
         }
-
-        @keyframes textShine {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 300% 50%; }
+        
+        @keyframes waterFlow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
         }
 
         .subtitle {
             font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan);
-            font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase;
-            padding: 6px 16px; border-radius: 4px;
-            background: rgba(0, 242, 255, 0.03);
-            border: 1px solid rgba(0, 242, 255, 0.15);
-            display: inline-block;
-            position: relative; overflow: hidden;
-            margin-bottom: 10px;
+            font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase;
+            padding: 5px 15px; border-radius: 4px;
+            background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);
+            margin-bottom: 10px; position: relative; overflow: hidden;
         }
-
         .subtitle::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.3), transparent);
-            animation: scan 4s infinite ease-in-out;
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: scan 3s infinite linear;
         }
-        @keyframes scan { 0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; } }
+        @keyframes scan { 0% { left: -100%; } 100% { left: 200%; } }
 
-        /* --- PROFILE SECTION --- */
-        .profile-row {
-            display: flex; align-items: center; justify-content: center; gap: 15px;
-            margin-top: 5px;
-            padding: 8px 20px;
-            border-radius: 50px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            animation: fadeUp 1s ease forwards 0.2s;
-            opacity: 0; transform: translateY(10px);
+        /* Profile navigation structure */
+        .profile-nav {
+            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+            width: 100%; max-width: 600px; position: relative;
         }
 
-        @keyframes fadeUp {
-            to { opacity: 1; transform: translateY(0); }
+        .nav-side {
+            display: flex; align-items: center; gap: 8px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+            color: var(--text-dim); text-decoration: none; transition: 0.3s;
+        }
+        .nav-side:hover { color: #fff; }
+        .nav-side.left { justify-content: flex-end; padding-right: 40px; }
+        .nav-side.right { justify-content: flex-start; padding-left: 40px; }
+
+        .center-brand { display: flex; align-items: center; gap: 20px; position: relative; }
+        .center-brand::before, .center-brand::after {
+            content: ''; width: 10px; height: 2rem;
+            border: 1px solid rgba(255,255,255,0.15); transition: 0.4s;
+            animation: pulseBrackets 2.5s infinite alternate ease-in-out;
+        }
+        .center-brand::before { border-right: 0; }
+        .center-brand::after { border-left: 0; }
+        @keyframes pulseBrackets { 
+            0% { opacity: 0.2; } 
+            100% { opacity: 1; border-color: var(--accent-cyan); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); } 
         }
 
         .creator-name {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1rem; font-weight: 700; color: #fff;
-            padding-right: 15px;
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 2.2rem; font-weight: 700; color: #fff;
+            text-transform: uppercase; letter-spacing: 6px; margin: 0;
         }
 
-        .pill-btn-small {
-            text-decoration: none; font-weight: 500; font-size: 0.75rem;
-            color: var(--text-dim); transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .pill-btn-small:hover { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-
-
-        /* --- 3D INTERACTIVE CARDS --- */
-        .grid {
-            display: flex; flex-wrap: wrap; justify-content: center; 
-            gap: 20px;
-            width: 100%;
-        }
+        /* Module card layout */
+        .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; width: 100%; }
 
         .card-wrapper {
-            width: 100%; max-width: 320px;
-            flex: 1 1 280px;
-            position: relative;
-            transform-style: preserve-3d;
+            width: 100%; max-width: 320px; flex: 1 1 300px;
+            position: relative; transform-style: preserve-3d;
+            opacity: 0; transform: translate3d(0, 20px, 0);
         }
+        .card-wrapper.visible { animation: fadeInUp 0.8s ease forwards; }
+        @keyframes fadeInUp { to { opacity: 1; transform: translate3d(0, 0, 0); } }
 
         .card {
             width: 100%; height: 100%;
-            background: var(--card-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--card-border);
-            border-radius: 20px; 
-            padding: 35px 25px;
-            text-decoration: none; 
-            position: relative;
-            display: flex; flex-direction: column; align-items: center; text-align: center;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), 
-                        0 10px 30px rgba(0,0,0,0.3);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            overflow: hidden;
-            cursor: pointer;
-            z-index: 1;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        /* CLICK FIX: 
-           1. pointer-events: none on children ensures clicks bubble to the parent anchor.
-           2. ::after overlay ensures no dead spots.
-        */
-        .card > * {
-            pointer-events: none;
-        }
-
-        .card::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            z-index: 10; 
-            background: transparent;
+            background: var(--card-bg); backdrop-filter: blur(15px);
+            border: 1px solid var(--card-border); border-radius: 16px;
+            padding: 25px; text-decoration: none; position: relative;
+            display: flex; flex-direction: column; gap: 15px;
+            transition: all 0.3s ease; overflow: hidden;
         }
 
         .card::before {
-            content: ''; position: absolute;
-            width: 400px; height: 400px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-            top: var(--mouse-y, 50%); left: var(--mouse-x, 50%);
-            transform: translate(-50%, -50%);
-            opacity: 0; transition: opacity 0.3s;
-            pointer-events: none; z-index: 0;
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.08) 0%, transparent 60%);
+            opacity: 0; transition: 0.3s; pointer-events: none;
         }
         .card:hover::before { opacity: 1; }
-        .card:hover { 
-            border-color: rgba(255,255,255,0.2); 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-        }
+        .card:hover { border-color: rgba(255,255,255,0.2); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
 
-        .card-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center;}
+        .card-corner {
+            position: absolute; width: 10px; height: 10px;
+            border: 1px solid var(--accent-cyan); opacity: 0; transition: 0.3s;
+        }
+        .card:hover .card-corner { opacity: 1; }
+        .tl { top: 15px; left: 15px; border-right: 0; border-bottom: 0; }
+        .tr { top: 15px; right: 15px; border-left: 0; border-bottom: 0; }
+        .bl { bottom: 15px; left: 15px; border-right: 0; border-top: 0; }
+        .br { bottom: 15px; right: 15px; border-left: 0; border-top: 0; }
+
+        .card-header { display: flex; align-items: center; gap: 15px; position: relative; z-index: 2; }
 
         .icon-box {
-            width: 60px; height: 60px;
-            border-radius: 16px;
+            width: 48px; height: 48px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; margin-bottom: 20px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 1.5rem; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08); transition: 0.3s;
+        }
+        .card:hover .icon-box { background: rgba(255,255,255,0.1); transform: scale(1.1); }
+
+        .card h2 {
+            font-family: 'Space Grotesk', sans-serif; color: #fff;
+            font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; margin: 0;
         }
         
-        .card:hover .icon-box { 
-            transform: translateY(-5px) scale(1.1);
-            background: rgba(255,255,255,0.08);
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
+        .card p {
+            color: var(--text-dim); font-size: 0.85rem; line-height: 1.6;
+            margin: 0; position: relative; z-index: 2;
         }
 
-        .card h2 { 
-            font-family: 'Space Grotesk', sans-serif;
-            color: #fff; margin: 0 0 10px 0; font-size: 1.5rem; font-weight: 700; 
-            transition: color 0.2s;
-        }
-        .card:hover h2 { color: var(--accent-cyan); }
-        
-        .card p { 
-            color: var(--text-dim); font-size: 0.85rem; line-height: 1.5; margin: 0; 
-            max-width: 95%; transition: color 0.2s;
-        }
-        .card:hover p { color: #ccc; }
-
-        /* --- FOOTER --- */
-        .footer {
-            margin-top: 20px;
-            animation: fadeUp 1.2s ease forwards 0.5s;
-            opacity: 0;
+        .footer { 
+            margin-top: 20px; 
+            opacity: 0.4; 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 0.6rem; 
+            letter-spacing: 1.5px; 
+            text-align: center;
+            line-height: 1.5;
+            max-width: 80%;
         }
 
-        .ai-disclaimer {
-            font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; 
-            color: var(--text-dim); opacity: 0.3;
-            text-align: center; letter-spacing: 1px;
+        /* Particle engine */
+        .particles { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
+        .particle { position: absolute; opacity: 0; animation: floatUp linear infinite; }
+        @keyframes floatUp {
+            0% { transform: translate3d(0, 110vh, 0) rotate(0deg); opacity: 0; }
+            20% { opacity: 0.3; }
+            80% { opacity: 0.3; }
+            100% { transform: translate3d(0, -10vh, 0) rotate(45deg); opacity: 0; }
         }
 
-        /* --- RESPONSIVE DESIGN --- */
         @media (max-width: 768px) {
-            .logo { font-size: 2.5rem; }
-            .grid { flex-direction: column; align-items: center; }
-            .card-wrapper { width: 100%; max-width: 100%; }
-            .card-wrapper { transform: none !important; } 
-            
-            .profile-row { flex-wrap: wrap; gap: 10px; justify-content: center; }
-            .creator-name { border-right: none; padding-right: 0; width: 100%; text-align: center; margin-bottom: 5px; }
+            .logo { font-size: 2.6rem; letter-spacing: -1px; }
+            .profile-nav { grid-template-columns: 1fr; gap: 20px; }
+            .nav-side.left, .nav-side.right { justify-content: center; padding: 0; }
+            .creator-name { font-size: 1.8rem; }
+            .center-brand::before, .center-brand::after { display: none; }
         }
-
     </style>
 </head>
 <body>
 
-    <!-- Visual Overlays -->
     <div class="grain-overlay"></div>
     <div class="bg-gradient"></div>
+    <div id="particles" class="particles"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
-    <div class="particles" id="particles"></div>
 
-    <!-- Main Content -->
     <div class="main-blur-wrapper" id="mainContent">
         <div class="container">
             
-            <!-- Header -->
-            <div class="header">
+            <header class="header">
                 <div class="logo" id="mainTitle">GOBY LAB SUITE</div>
-                <div class="subtitle">ENGINEERING SIMULATION HUB // 2026</div>
+                <div class="subtitle">ENGINEERING SIMULATION HUB</div>
 
-                <div class="profile-row">
-                    <span class="creator-name">Goby</span>
-                    <a href="https://www.linkedin.com/in/gal-ben/" target="_blank" class="pill-btn-small">LinkedIn</a>
-                    <a href="https://ggaall98.github.io/GobyOS-2025/" target="_blank" class="pill-btn-small">Personal Page</a>
-                </div>
-            </div>
+                <nav class="profile-nav">
+                    <a href="https://www.linkedin.com/in/gal-ben/" target="_blank" class="nav-side left">
+                        <span>LinkedIn</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                    </a>
 
-            <!-- Lab Modules -->
-            <div class="grid">
+                    <div class="center-brand">
+                        <h1 class="creator-name" id="creatorName">Goby</h1>
+                    </div>
+
+                    <a href="https://ggaall98.github.io/GobyOS-2025/" target="_blank" class="nav-side right">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        <span>Portfolio</span>
+                    </a>
+                </nav>
+            </header>
+
+            <section class="grid">
                 
                 <div class="card-wrapper">
                     <a href="fatigue.html" class="card">
-                        <div class="card-content">
-                            <div class="icon-box" style="color: var(--accent-cyan); text-shadow: 0 0 20px var(--accent-cyan);">
-                                🔄
-                            </div>
+                        <div class="card-corner tl"></div><div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div><div class="card-corner br"></div>
+                        <div class="card-header">
+                            <div class="icon-box" style="color: var(--accent-cyan);">🔄</div>
                             <h2>Fatigue Lab</h2>
-                            <p>Advanced S-N analysis, Basquin modeling, and lifetime prediction for aerospace alloys.</p>
                         </div>
+                        <p>Advanced S-N analysis, Basquin modeling, and lifetime prediction for aerospace alloys.</p>
                     </a>
                 </div>
 
                 <div class="card-wrapper">
                     <a href="buckling.html" class="card">
-                        <div class="card-content">
-                            <div class="icon-box" style="color: var(--accent-pink); text-shadow: 0 0 20px var(--accent-pink);">
-                                📉
-                            </div>
+                        <div class="card-corner tl"></div><div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div><div class="card-corner br"></div>
+                        <div class="card-header">
+                            <div class="icon-box" style="color: var(--accent-pink);">📉</div>
                             <h2>Buckling Lab</h2>
-                            <p>Euler stability, imperfection sensitivity, and interactive Southwell plots.</p>
                         </div>
+                        <p>Euler stability, imperfection sensitivity, and interactive Southwell plots for structural columns.</p>
                     </a>
                 </div>
 
-            </div>
-
-            <!-- Footer -->
-            <div class="footer">
-                <div class="ai-disclaimer">
-                    // Simulations generated via AI for Solid Mechanics Lab • Tel Aviv University //
+                <div class="card-wrapper">
+                    <a href="vibrations.html" class="card">
+                        <div class="card-corner tl"></div><div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div><div class="card-corner br"></div>
+                        <div class="card-header">
+                            <div class="icon-box" style="color: var(--accent-purple);">⚛️</div>
+                            <h2>Vibrations Lab</h2>
+                        </div>
+                        <p>Harmonic analysis, resonance phenomena, and modal shape visualization of dynamic systems.</p>
+                    </a>
                 </div>
-            </div>
+
+            </section>
+
+            <footer class="footer">
+                // SIMULATIONS GENERATED VIA AI FOR SOLID MECHANICS LAB • TEL AVIV UNIVERSITY //
+            </footer>
         </div>
     </div>
 
     <script>
-        // --- 1. Initialization and Effects ---
+        // Post-mount initialization
         window.addEventListener('load', () => {
-            requestAnimationFrame(() => {
-                document.getElementById('mainContent').classList.add('focused');
-                scrambleText(document.getElementById('mainTitle'), "GOBY LAB SUITE");
+            document.getElementById('mainContent').classList.add('focused');
+            scrambleText(document.getElementById('mainTitle'), "GOBY LAB SUITE");
+            scrambleText(document.getElementById('creatorName'), "Goby");
+            
+            // Stagger card entrance animations
+            document.querySelectorAll('.card-wrapper').forEach((card, i) => {
+                setTimeout(() => card.classList.add('visible'), 300 + (i * 150));
             });
         });
 
-        // --- 2. Text Decryption Animation ---
+        // Procedural text decryption effect
         function scrambleText(element, finalText) {
             let iterations = 0;
-            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%&";
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
             const interval = setInterval(() => {
-                element.innerText = finalText
-                    .split("")
-                    .map((letter, index) => {
-                        if(index < iterations) {
-                            return finalText[index];
-                        }
-                        return letters[Math.floor(Math.random() * letters.length)];
-                    })
-                    .join("");
-                
+                element.innerText = finalText.split("").map((letter, index) => {
+                    if(index < iterations) return finalText[index];
+                    return letters[Math.floor(Math.random() * letters.length)];
+                }).join("");
                 if(iterations >= finalText.length) clearInterval(interval);
-                
-                iterations += 1/2; 
-            }, 30);
+                iterations += 1/3; 
+            }, 40);
         }
 
-        // --- 3. 3D Tilt Interaction ---
-        const cards = document.querySelectorAll('.card');
-        const wrappers = document.querySelectorAll('.card-wrapper');
-
-        wrappers.forEach((wrapper, index) => {
-            const card = cards[index];
-
+        // Card interaction and pointer tracking
+        document.querySelectorAll('.card-wrapper').forEach(wrapper => {
+            const card = wrapper.querySelector('.card');
             wrapper.addEventListener('mousemove', (e) => {
-                // Disable transition for instantaneous response (prevents lag)
-                card.style.transition = 'none';
-
                 const rect = wrapper.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
-
-                // Update internal spotlight
+                
                 card.style.setProperty('--mouse-x', `${x}px`);
                 card.style.setProperty('--mouse-y', `${y}px`);
-
-                // Calculate Rotation
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const rotateX = ((y - centerY) / centerY) * -12;
-                const rotateY = ((x - centerX) / centerX) * 12;
-
-                card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.04)`;
+                
+                const rotateX = ((y - rect.height/2) / (rect.height/2)) * -10;
+                const rotateY = ((x - rect.width/2) / (rect.width/2)) * 10;
+                
+                card.style.transform = `translate3d(0,0,0) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03)`;
             });
-
             wrapper.addEventListener('mouseleave', () => {
-                // Re-enable transition for smooth exit
-                card.style.transition = 'transform 0.5s ease, border-color 0.2s ease, box-shadow 0.2s ease';
-                card.style.transform = `rotateX(0) rotateY(0) scale(1)`;
+                card.style.transform = `translate3d(0,0,0) rotateX(0) rotateY(0) scale(1)`;
             });
         });
 
-        // --- 4. Ambient Particle System ---
-        const emojis = ['⚙️', '📐', '🧪', '📉', '🏗️', '🔬', '🔩', '📡', '🧲'];
-        const container = document.getElementById('particles');
-        
-        for(let i=0; i<18; i++) { 
-            const el = document.createElement('div');
-            el.classList.add('particle');
-            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-            el.style.left = Math.random() * 100 + '%';
-            el.style.animationDuration = (12 + Math.random() * 10) + 's';
-            el.style.animationDelay = (Math.random() * -15) + 's';
-            
-            const depth = Math.random();
-            el.style.filter = `blur(${depth * 4}px)`; 
-            el.style.opacity = (1 - depth) * 0.5; 
-            el.style.fontSize = (0.8 + Math.random()) + 'rem';
-            
-            container.appendChild(el);
+        // Procedural background particles
+        const partContainer = document.getElementById('particles');
+        const emojis = ['⚙️', '📐', '🧪', '📉', '🏗️', '🔩'];
+        for(let i=0; i<15; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.innerText = emojis[Math.floor(Math.random()*emojis.length)];
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDuration = (12 + Math.random()*15) + 's';
+            p.style.animationDelay = (Math.random()*-15) + 's';
+            p.style.fontSize = (0.7 + Math.random()*0.8) + 'rem';
+            partContainer.appendChild(p);
         }
 
-        // --- 5. Glass Flame Mouse Trail ---
+        // Pointer trail generation
         document.addEventListener('mousemove', (e) => {
-            // Create particle
-            const particle = document.createElement('div');
-            particle.classList.add('cursor-flame-particle');
-            document.body.appendChild(particle);
-
-            // Set Position
-            particle.style.left = `${e.clientX}px`;
-            particle.style.top = `${e.clientY}px`;
-
-            // Randomize Size and Physics
-            const size = Math.random() * 8 + 4; // 4px to 12px
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
+            const p = document.createElement('div');
+            p.className = 'cursor-flame-particle';
+            document.body.appendChild(p);
+            p.style.left = `${e.clientX}px`;
+            p.style.top = `${e.clientY}px`;
+            const size = Math.random() * 6 + 2;
+            p.style.width = p.style.height = `${size}px`;
             
-            // Animate using Web Animations API for performance
-            const destinationX = (Math.random() - 0.5) * 20;
-            const destinationY = - (Math.random() * 40 + 20); // Float up
-
-            const animation = particle.animate([
-                { transform: `translate(-50%, -50%) scale(1)`, opacity: 0.6, filter: 'blur(1px)' },
-                { transform: `translate(calc(-50% + ${destinationX}px), calc(-50% + ${destinationY}px)) scale(0)`, opacity: 0, filter: 'blur(4px)' }
-            ], {
-                duration: 600 + Math.random() * 400,
-                easing: 'cubic-bezier(0, .9, .57, 1)'
-            });
-
-            // Cleanup
-            animation.onfinish = () => particle.remove();
+            const anim = p.animate([
+                { transform: `translate3d(-50%, -50%, 0) scale(1)`, opacity: 0.5 },
+                { transform: `translate3d(${(Math.random()-0.5)*25}px, ${-40-Math.random()*40}px, 0) scale(0)`, opacity: 0 }
+            ], { duration: 600 + Math.random()*400, easing: 'ease-out' });
+            anim.onfinish = () => p.remove();
         });
-
     </script>
-
 </body>
 </html>
