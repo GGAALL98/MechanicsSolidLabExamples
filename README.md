@@ -2,14 +2,6 @@
 
 A collection of interactive laboratory examples and demonstrations for Mechanics of Solids courses. This repository contains web-based simulations and educational resources to help students understand key concepts in solid mechanics.
 
-## 📚 Contents
-
-This repository includes the following interactive examples:
-
-- **[Buckling Analysis](buckling.html)** - Examples and simulations related to structural buckling behavior
-- **[Fatigue Analysis](fatigue.html)** - Demonstrations of fatigue failure and material endurance
-- **[Main Index](index.html)** - Overview and navigation for all examples
-
 ## 🎯 Usage
 
 These examples are designed for:
